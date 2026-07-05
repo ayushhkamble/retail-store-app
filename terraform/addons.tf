@@ -22,22 +22,33 @@ module "eks_addons" {
   }
 
   # =============================================================================
+  # AWS LOAD BALANCER CONTROLLER - Required for EKS Auto Mode
+  # =============================================================================
+  enable_aws_load_balancer_controller = true
+  aws_load_balancer_controller = {
+    most_recent = true
+    namespace   = "kube-system"
+  }
+
+  # =============================================================================
   # NGINX INGRESS CONTROLLER - Load Balancing and Routing
   # =============================================================================
   enable_ingress_nginx = true
   ingress_nginx = {
     most_recent = true
     namespace   = "ingress-nginx"
-    
+
     # Basic configuration
     set = [
       {
         name  = "controller.service.type"
         value = "LoadBalancer"
       },
+      # externalTrafficPolicy=Local requires ip target type; it preserves client IPs
+      # but can cause uneven load distribution. Use Cluster if seeing 503s.
       {
         name  = "controller.service.externalTrafficPolicy"
-        value = "Local"
+        value = "Cluster"
       },
       {
         name  = "controller.resources.requests.cpu"
@@ -56,8 +67,10 @@ module "eks_addons" {
         value = "256Mi"
       }
     ]
-    
-    # AWS Load Balancer specific annotations
+
+    # AWS Load Balancer annotations
+    # Using "ip" target type because EKS Auto Mode does not use traditional
+    # managed node groups that support "instance" target type registration.
     set_sensitive = [
       {
         name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
@@ -69,7 +82,7 @@ module "eks_addons" {
       },
       {
         name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-nlb-target-type"
-        value = "instance"
+        value = "ip"
       },
       {
         name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-health-check-path"
@@ -77,7 +90,7 @@ module "eks_addons" {
       },
       {
         name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-health-check-port"
-        value = "10254"
+        value = "traffic-port"
       },
       {
         name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-health-check-protocol"
@@ -90,20 +103,11 @@ module "eks_addons" {
   # OPTIONAL: MONITORING STACK
   # =============================================================================
   # Uncomment below to enable monitoring (increases costs)
-  
+
   # enable_kube_prometheus_stack = var.enable_monitoring
   # kube_prometheus_stack = {
   #   most_recent = true
   #   namespace   = "monitoring"
-  # }
-
-  # =============================================================================
-  # OPTIONAL: AWS LOAD BALANCER CONTROLLER
-  # =============================================================================
-  # enable_aws_load_balancer_controller = true
-  # aws_load_balancer_controller = {
-  #   most_recent = true
-  #   namespace   = "kube-system"
   # }
 
   depends_on = [module.retail_app_eks]
