@@ -1,6 +1,6 @@
 # AWS Containers Retail Sample - Orders Service
 
-<!-- GitOps Test:-->
+<!-- GitOps Test:added-->
 
 | Language | Persistence |
 | -------- | ----------- |

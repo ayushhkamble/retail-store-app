@@ -1,6 +1,6 @@
 # AWS Containers Retail Sample - UI Service
 
-<!-- GitOps Test:-->
+<!-- GitOps Test:added-->
 
 | Language | Persistence |
 | -------- | ----------- |
